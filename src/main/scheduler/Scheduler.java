@@ -1,6 +1,7 @@
 package scheduler;
 
 import scheduler.db.ConnectionManager;
+import scheduler.model.Appointment;
 import scheduler.model.Caregiver;
 import scheduler.model.Patient;
 import scheduler.model.Vaccine;
@@ -23,7 +24,8 @@ public class Scheduler {
     private static Caregiver currentCaregiver = null;
     private static Patient currentPatient = null;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
+
         // printing greetings text
         System.out.println();
         System.out.println("Welcome to the COVID-19 Vaccine Reservation Scheduling Application!");
