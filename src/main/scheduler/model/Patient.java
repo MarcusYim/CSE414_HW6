@@ -30,6 +30,7 @@ public class Patient
     }
 
     public byte[] getSalt() {
+
         return salt;
     }
 

@@ -247,7 +247,8 @@ public class Scheduler {
         // TODO: Part 2
     }
 
-    private static void reserve(String[] tokens) {
+    private static void reserve(String[] tokens)
+    {
         // TODO: Part 2
     }
 
