@@ -41,29 +41,12 @@ public class Patient
         ConnectionManager cm = new ConnectionManager();
         Connection con = cm.createConnection();
 
-        String addCaregiver = "INSERT INTO Caregivers VALUES (? , ?, ?)";
+        String addCaregiver = "INSERT INTO Patients VALUES (? , ?, ?)";
         try {
             PreparedStatement statement = con.prepareStatement(addCaregiver);
             statement.setString(1, this.username);
             statement.setBytes(2, this.salt);
             statement.setBytes(3, this.hash);
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            throw new SQLException();
-        } finally {
-            cm.closeConnection();
-        }
-    }
-
-    public void uploadAvailability(Date d) throws SQLException {
-        ConnectionManager cm = new ConnectionManager();
-        Connection con = cm.createConnection();
-
-        String addAvailability = "INSERT INTO Availabilities VALUES (? , ?)";
-        try {
-            PreparedStatement statement = con.prepareStatement(addAvailability);
-            statement.setDate(1, d);
-            statement.setString(2, this.username);
             statement.executeUpdate();
         } catch (SQLException e) {
             throw new SQLException();
@@ -103,7 +86,7 @@ public class Patient
             ConnectionManager cm = new ConnectionManager();
             Connection con = cm.createConnection();
 
-            String getPatient = "SELECT salt, hash FROM Patient WHERE Username = ?";
+            String getPatient = "SELECT salt, hash FROM Patients WHERE Username = ?";
             try {
                 PreparedStatement statement = con.prepareStatement(getPatient);
                 statement.setString(1, this.username);
