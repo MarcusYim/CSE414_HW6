@@ -351,9 +351,134 @@ public class Scheduler {
         }
     }
 
+    private static String getCaregiver(Connection con, ConnectionManager cm, String date)
+    {
+        String getAvailabilities = "SELECT Username FROM Availabilities WHERE Time = ? ORDER BY Username";
+        String caregiver = "";
+        try {
+            Date d = Date.valueOf(date);
+            PreparedStatement statement = con.prepareStatement(getAvailabilities);
+            statement.setDate(1, d);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                caregiver = resultSet.getString("Username");
+                return caregiver;
+            }
+        } catch (Exception e) {
+            System.out.println("Please try again!");
+            return null;
+        } finally {
+            cm.closeConnection();
+        }
+
+        System.out.println("No Caregiver is available!");
+        return null;
+    }
+
+    public static void deleteCaregiver(Connection con, ConnectionManager cm, Date date, String caregiver)
+    {
+        String deleteAvailability = "DELETE FROM Availabilities WHERE Time = ? AND Username = ?";
+
+        try {
+            PreparedStatement statement = con.prepareStatement(deleteAvailability);
+            statement.setDate(1, date);
+            statement.setString(2, caregiver);
+            statement.executeQuery();
+        } catch (Exception e) {
+            System.out.println("Please try again!");
+        } finally {
+            cm.closeConnection();
+        }
+    }
+
     private static void reserve(String[] tokens)
     {
-        // TODO: Part 2
+        if (currentPatient == null && currentCaregiver == null)
+        {
+            System.out.println("Please login first!");
+            return;
+        }
+
+        if (currentPatient == null)
+        {
+            System.out.println("Please login as a patient!");
+            return;
+        }
+
+        String date = tokens[1];
+        String vaccine = tokens[2];
+
+        ConnectionManager cm = new ConnectionManager();
+        Connection con = cm.createConnection();
+
+        String getAvailabilities = "SELECT Username, Doses FROM Availabilities, Vaccines WHERE Time = ? AND Name = ? ORDER BY Username DESC";
+        String deleteAvailability = "DELETE FROM Availabilities WHERE Time = ? AND Username = ?";
+        String createAppointment = "INSERT INTO Appointments VALUES(?, ?, ?, ?)";
+        String getID = "SELECT apID FROM Appointments WHERE Time = ? AND cUsername = ?";
+
+        String caregiver = "";
+        int doses = 0;
+        try {
+            Date d = Date.valueOf(date);
+            PreparedStatement statement = con.prepareStatement(getAvailabilities);
+            statement.setDate(1, d);
+            statement.setString(2, vaccine);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                caregiver = resultSet.getString("Username");
+                doses = resultSet.getInt("Doses");
+            }
+
+            if (caregiver.isEmpty())
+            {
+                System.out.println("No Caregiver is available!");
+                return;
+            }
+
+            if (doses < 1)
+            {
+                System.out.println("Not enough available doses");
+                return;
+            }
+
+            PreparedStatement dstatement = con.prepareStatement(deleteAvailability);
+            dstatement.setDate(1, d);
+            dstatement.setString(2, caregiver);
+            dstatement.execute();
+
+            PreparedStatement astatement = con.prepareStatement(createAppointment);
+            astatement.setString(1, caregiver);
+            astatement.setString(2, currentPatient.getUsername());
+            astatement.setString(3, vaccine);
+            astatement.setDate(4, d);
+            astatement.execute();
+
+            PreparedStatement istatement = con.prepareStatement(getID);
+            istatement.setDate(1, d);
+            istatement.setString(2, caregiver);
+            ResultSet iresultSet = istatement.executeQuery();
+            int apID = -1;
+
+            while (iresultSet.next()) {
+                apID = iresultSet.getInt("apID");
+            }
+
+            System.out.println("Appointment ID: " + apID + ", Caregiver username: " + caregiver);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("Please try again!");
+        } finally {
+            cm.closeConnection();
+        }
+
+
+
+        //query with vaccine and date to get caregivers
+        //delete caregiver from availabilities
+        //create appointment
     }
 
     private static void uploadAvailability(String[] tokens) {
