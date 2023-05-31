@@ -15,6 +15,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Date;
+import java.util.Arrays;
 
 public class Scheduler {
 
@@ -23,6 +24,9 @@ public class Scheduler {
     //       since only one user can be logged-in at a time
     private static Caregiver currentCaregiver = null;
     private static Patient currentPatient = null;
+
+    private static final String[] specialChars = new String[] {"!", "@", "#", "?"};
+    private static final int passLength = 8;
 
     public static void main(String[] args) throws SQLException {
 
@@ -94,13 +98,71 @@ public class Scheduler {
         }
     }
 
+    private static boolean checkPassword(String pass)
+    {
+        int upper = 0, lower = 0, number = 0, special = 0;
+
+        for(int i = 0; i < pass.length(); i++)
+        {
+            char ch = pass.charAt(i);
+            if (ch >= 'A' && ch <= 'Z')
+                upper++;
+            else if (ch >= 'a' && ch <= 'z')
+                lower++;
+            else if (ch >= '0' && ch <= '9')
+                number++;
+            else
+                special++;
+        }
+
+        if (pass.length() < passLength)
+        {
+            return false;
+        }
+
+        if (special < 1)
+        {
+            return false;
+        }
+
+        if (upper < 2)
+        {
+            return false;
+        }
+
+        if (lower < 2)
+        {
+            return false;
+        }
+
+        if (number < 2)
+        {
+            return false;
+        }
+
+        if (upper + lower < 4)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     private static void createPatient(String[] tokens) {
         if (tokens.length != 3) {
             System.out.println("Failed to create user.");
             return;
         }
+
         String username = tokens[1];
         String password = tokens[2];
+
+        if (!checkPassword(password))
+        {
+            System.out.println("Password is not strong enough.");
+            return;
+        }
+
         if (usernameExistsPatient(username)) {
             System.out.println("Username taken, try again!");
             return;
@@ -126,6 +188,13 @@ public class Scheduler {
         }
         String username = tokens[1];
         String password = tokens[2];
+
+        if (!checkPassword(password))
+        {
+            System.out.println("Password is not strong enough.");
+            return;
+        }
+
         // check 2: check if the username has been taken already
         if (usernameExistsCaregiver(username)) {
             System.out.println("Username taken, try again!");
@@ -246,7 +315,40 @@ public class Scheduler {
     }
 
     private static void searchCaregiverSchedule(String[] tokens) {
-        // TODO: Part 2
+        if (currentCaregiver == null && currentPatient == null)
+        {
+            System.out.println("Please login first!");
+        }
+
+        if (tokens.length != 2) {
+            System.out.println("Login failed.");
+            return;
+        }
+
+        String date = tokens[1];
+
+        ConnectionManager cm = new ConnectionManager();
+        Connection con = cm.createConnection();
+
+        String getAvailabilities = "SELECT Username, Name, Doses FROM Availabilities LEFT OUTER JOIN Vaccines ON 1 = 1 WHERE Time = ? ORDER BY Username";
+        try {
+            Date d = Date.valueOf(date);
+            PreparedStatement statement = con.prepareStatement(getAvailabilities);
+            statement.setDate(1, d);
+            ResultSet resultSet = statement.executeQuery();
+
+            System.out.println("Available caregivers and vaccines:");
+            while (resultSet.next()) {
+                System.out.print(resultSet.getString("username") + " ");
+                System.out.print(resultSet.getString("Name") + " ");
+                System.out.println(resultSet.getInt("Doses"));
+            }
+            System.out.println();
+        } catch (Exception e) {
+            System.out.println("Please try again!");
+        } finally {
+            cm.closeConnection();
+        }
     }
 
     private static void reserve(String[] tokens)
@@ -330,7 +432,16 @@ public class Scheduler {
         // TODO: Part 2
     }
 
-    private static void logout(String[] tokens) {
-        // TODO: Part 2
+    private static void logout(String[] tokens)
+    {
+        if (!(currentCaregiver == null && currentPatient == null))
+        {
+            currentCaregiver = null;
+            currentPatient = null;
+            System.out.println("Successfully logged out.");
+            return;
+        }
+
+        System.out.println("No user logged in.");
     }
 }
