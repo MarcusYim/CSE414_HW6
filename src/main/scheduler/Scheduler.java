@@ -554,19 +554,57 @@ public class Scheduler {
     }
 
     private static void showAppointments(String[] tokens) {
-        // TODO: Part 2
+        String getAppointments = "";
+        String currentUser = "";
+
+        if (currentPatient != null)
+        {
+            getAppointments = "SELECT apID, vName, Time, cUsername FROM Appointments WHERE pUsername = '" + currentPatient.getUsername() + "' ORDER BY apID";
+            currentUser = "cUsername";
+        }
+        else if (currentCaregiver != null)
+        {
+            getAppointments = "SELECT apID, vName, Time, pUsername FROM Appointments WHERE cUsername = '" + currentCaregiver.getUsername() + "' ORDER BY apID";
+            currentUser = "pUsername";
+        }
+        else
+        {
+            System.out.println("Please login first!");
+            return;
+        }
+
+        ConnectionManager cm = new ConnectionManager();
+        Connection con = cm.createConnection();
+
+        try {
+            PreparedStatement statement = con.prepareStatement(getAppointments);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                System.out.println(resultSet.getInt("apID") + " " + resultSet.getString("vName") + " " + resultSet.getString("Time") + " " + resultSet.getString(currentUser));
+            }
+        } catch (Exception e) {
+            System.out.println("Please try again!");
+        } finally {
+            cm.closeConnection();
+        }
     }
 
     private static void logout(String[] tokens)
     {
-        if (!(currentCaregiver == null && currentPatient == null))
+        if (!(currentCaregiver == null || currentPatient == null))
+        {
+            System.out.println("Please try again!");
+        }
+        else if (currentCaregiver == null && currentPatient == null)
+        {
+            System.out.println("No user logged in!");
+        }
+        else
         {
             currentCaregiver = null;
             currentPatient = null;
-            System.out.println("Successfully logged out.");
-            return;
+            System.out.println("Successfully logged out!");
         }
-
-        System.out.println("No user logged in.");
     }
 }
