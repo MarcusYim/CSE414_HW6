@@ -414,7 +414,8 @@ public class Scheduler {
 
         String getAvailabilities = "SELECT Username, Doses FROM Availabilities, Vaccines WHERE Time = ? AND Name = ? ORDER BY Username DESC";
         String deleteAvailability = "DELETE FROM Availabilities WHERE Time = ? AND Username = ?";
-        String createAppointment = "INSERT INTO Appointments VALUES(?, ?, ?, ?)";
+        String createAppointment = "INSERT INTO Appointments VALUES(?, ?, ?, ?) " +
+                                    "UPDATE Vaccines SET Doses = Doses - 1 WHERE Name = ?";
         String getID = "SELECT apID FROM Appointments WHERE Time = ? AND cUsername = ?";
 
         String caregiver = "";
@@ -453,6 +454,7 @@ public class Scheduler {
             astatement.setString(2, currentPatient.getUsername());
             astatement.setString(3, vaccine);
             astatement.setDate(4, d);
+            astatement.setString(5, vaccine);
             astatement.execute();
 
             PreparedStatement istatement = con.prepareStatement(getID);
